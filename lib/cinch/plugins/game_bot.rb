@@ -136,6 +136,8 @@ module Cinch; module Plugins; class GameBot
 
   def do_start_game(m, game, options)
     Channel(game.channel_name).send('Implementing classes should override do_start_game')
+    # Return false or nil if the game failed to start, otherwise return something truthy.
+    false
   end
 
   def do_reset_game(game)
@@ -224,9 +226,8 @@ module Cinch; module Plugins; class GameBot
       return
     end
 
-    @idle_timers[game.channel_name].stop
-
-    self.do_start_game(m, game, options)
+    successful = self.do_start_game(m, game, options)
+    @idle_timers[game.channel_name].stop if successful
   end
 
   def start_new_game(game)
