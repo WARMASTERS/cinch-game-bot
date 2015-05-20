@@ -271,14 +271,13 @@ module Cinch; module Plugins; class GameBot
   # Mod commands
   #--------------------------------------------------------------------------------
 
-  def is_mod?(nick)
+  def is_mod?(user)
     # make sure that the nick is in the mod list and the user is authenticated
-    user = User(nick)
     user.authed? && @mods.include?(user.authname)
   end
 
   def reset_game(m, channel_name)
-    return unless self.is_mod?(m.user.nick)
+    return unless self.is_mod?(m.user)
     game = self.game_of(m, channel_name, ['reset a game', '!reset'])
 
     return unless game
@@ -295,7 +294,7 @@ module Cinch; module Plugins; class GameBot
   end
 
   def kick_user(m, nick)
-    return unless self.is_mod?(m.user.nick)
+    return unless self.is_mod?(m.user)
 
     user = User(nick)
     game = @user_games[user]
@@ -311,7 +310,7 @@ module Cinch; module Plugins; class GameBot
   end
 
   def replace_user(m, nick1, nick2)
-    return unless self.is_mod?(m.user.nick)
+    return unless self.is_mod?(m.user)
     # find irc users based on nick
     user1 = User(nick1)
     user2 = User(nick2)
@@ -343,7 +342,7 @@ module Cinch; module Plugins; class GameBot
 
   def room_mode(m, channel_name, mode)
     channel = channel_name ? Channel(channel_name) : m.channel
-    return unless self.is_mod?(m.user.nick)
+    return unless self.is_mod?(m.user)
     case mode
     when 'silent'
       Channel(channel.name).moderated = true
@@ -373,13 +372,13 @@ module Cinch; module Plugins; class GameBot
   end
 
   def noticeme(m, toggle, nick)
-    if toggle && toggle.downcase == 'list' && self.is_mod?(m.user.nick)
+    if toggle && toggle.downcase == 'list' && self.is_mod?(m.user)
       m.reply("PRIVMSG users: #{$pm_users.to_a}")
       return
     end
 
     # Mods can act on any nick. Others act only on self.
-    target = nick && self.is_mod?(m.user.nick) ? nick : m.user.nick
+    target = nick && self.is_mod?(m.user) ? nick : m.user.nick
 
     if toggle && toggle.downcase == 'on'
       $pm_users.delete(target)
