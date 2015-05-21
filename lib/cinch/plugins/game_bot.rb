@@ -70,7 +70,7 @@ module Cinch; module Plugins; class GameBot
     xmatch /start(?:\s+(.+))?/i,    :method => :start_game
 
     # game
-    xmatch /who(?:\s*(##?\w+))?/i,  :method => :list_players
+    xmatch /who(?:\s*(##?\w+)\s*)?$/i, :method => :list_players
 
     # other
     xmatch /invite/i,               :method => :invite
