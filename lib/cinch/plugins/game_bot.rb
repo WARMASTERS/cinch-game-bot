@@ -58,12 +58,10 @@ module Cinch; module Plugins; class GameBot
   end
 
   def self.xmatch(regex, args)
-    match(regex, args.dup)
-    args[:prefix] = lambda { |m| m.bot.nick + ': ' }
-    match(regex, args.dup)
-    args[:react_on] = :private
-    args[:prefix] = /^/
-    match(regex, args.dup)
+    match(regex, args.merge(react_on: :channel))
+    nick_prefix = lambda { |m| m.bot.nick + ': ' }
+    match(regex, args.merge(react_on: :channel, prefix: nick_prefix))
+    match(regex, args.merge(react_on: :private, prefix: /^!?/))
   end
 
   def self.common_commands
