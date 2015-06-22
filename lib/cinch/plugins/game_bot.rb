@@ -394,7 +394,7 @@ module Cinch; module Plugins; class GameBot
   end
 
   def intro(m)
-    m.user.send("Welcome to #{m.bot.nick}. You can join a game if there's one getting started with the command \"!join\". For more commands, type \"!help\". If you don't know how to play, you can read a rules summary with \"!rules\".")
+    m.reply("Welcome to #{m.bot.nick}. You can join a game if there's one getting started with the command \"!join\". For more commands, type \"!help\". If you don't know how to play, you can read a rules summary with \"!rules\".")
   end
 
   def changelog_dir(m)
