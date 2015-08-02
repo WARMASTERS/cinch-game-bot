@@ -57,40 +57,35 @@ module Cinch; module Plugins; class GameBot
     @last_invitation = Hash.new(0)
   end
 
-  def self.xmatch(regex, args)
-    match(regex, args.merge(react_on: :channel))
-    nick_prefix = lambda { |m| m.bot.nick + ': ' }
-    match(regex, args.merge(react_on: :channel, prefix: nick_prefix))
-    match(regex, args.merge(react_on: :private, prefix: /^!?/))
-  end
-
   def self.common_commands
-    xmatch /join(?:\s*(##?\w+))?/i, :method => :join
-    xmatch /leave/i,                :method => :leave
-    xmatch /start(?:\s+(.+))?/i,    :method => :start_game
+    # A recommended plugin prefix could be:
+    # c.plugins.prefix = lambda { |m| m.channel.nil? ? /^!?/ : /^#{m.bot.name}[:,]?\s+|^!/  }
+    match(/join(?:\s*(##?\w+))?/i, method: :join)
+    match(/leave/i,                method: :leave)
+    match(/start(?:\s+(.+))?/i,    method: :start_game)
 
     # game
-    xmatch /who(?:\s*(##?\w+)\s*)?$/i, :method => :list_players
+    match(/who(?:\s*(##?\w+)\s*)?$/i, method: :list_players)
 
     # other
-    xmatch /invite/i,               :method => :invite
-    xmatch /subscribe/i,            :method => :subscribe
-    xmatch /unsubscribe/i,          :method => :unsubscribe
-    xmatch /intro/i,                :method => :intro
-    xmatch /changelog$/i,           :method => :changelog_dir
-    xmatch /changelog (\d+)/i,      :method => :changelog
+    match(/invite/i,          method: :invite)
+    match(/subscribe/i,       method: :subscribe)
+    match(/unsubscribe/i,     method: :unsubscribe)
+    match(/intro/i,           method: :intro)
+    match(/changelog$/i,      method: :changelog_dir)
+    match(/changelog (\d+)/i, method: :changelog)
 
     # mod only commands
-    xmatch /reset(?:\s+(##?\w+))?/i,        :method => :reset_game
-    xmatch /replace (.+?) (.+)/i,           :method => :replace_user
-    xmatch /kick\s+(.+)/i,                  :method => :kick_user
-    xmatch /room(?:\s+(##?\w+))?\s+(.+)/i,  :method => :room_mode
+    match(/reset(?:\s+(##?\w+))?/i,       method: :reset_game)
+    match(/replace (.+?) (.+)/i,          method: :replace_user)
+    match(/kick\s+(.+)/i,                 method: :kick_user)
+    match(/room(?:\s+(##?\w+))?\s+(.+)/i, method: :room_mode)
 
-    xmatch /notice(?:\s+(on|off|list))?(?:\s+(.+))?/i, :method => :noticeme
+    match(/notice(?:\s+(on|off|list))?(?:\s+(.+))?/i, method: :noticeme)
 
-    listen_to :join,               :method => :voice_if_in_game
-    listen_to :leaving,            :method => :remove_if_not_started
-    listen_to :op,                 :method => :devoice_everyone_on_start
+    listen_to :join,    method: :voice_if_in_game
+    listen_to :leaving, method: :remove_if_not_started
+    listen_to :op,      method: :devoice_everyone_on_start
   end
 
   #--------------------------------------------------------------------------------
