@@ -479,6 +479,7 @@ module Cinch; module Plugins; class GameBot
   end
 
   def load_settings
+    return {} unless File.exist?(@settings_file)
     output = File.new(@settings_file, 'r')
     settings = YAML.load(output.read)
     output.close
