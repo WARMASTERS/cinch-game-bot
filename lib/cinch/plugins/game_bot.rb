@@ -38,8 +38,8 @@ module Cinch; module Plugins; class GameBot
     @channel_names = config[:channels]
     @settings_file = config[:settings]
 
-    @idle_timer_length    = config[:allowed_idle]
-    @invite_timer_length  = config[:invite_reset]
+    @idle_timer_length    = config[:allowed_idle] || 900
+    @invite_timer_length  = config[:invite_reset] || 900
 
     @games = {}
     @idle_timers = {}
