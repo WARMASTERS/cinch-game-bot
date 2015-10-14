@@ -34,7 +34,7 @@ module Cinch; module Plugins; class GameBot
     @changelog_file = config[:changelog_file] || ''
     @changelog     = self.load_changelog
 
-    @mods          = config[:mods]
+    @mods          = config[:mods] || []
     @channel_names = config[:channels]
     @settings_file = config[:settings]
 
