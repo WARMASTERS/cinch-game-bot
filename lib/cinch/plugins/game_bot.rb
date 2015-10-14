@@ -140,10 +140,6 @@ module Cinch; module Plugins; class GameBot
     Channel(game.channel_name).send("Implementing classes should override do_replace_user")
   end
 
-  def bg3po_invite_command(channel_name)
-    # Implementing classes should override bg3po_invite_command
-  end
-
   #--------------------------------------------------------------------------------
   # Main IRC Interface Methods
   #--------------------------------------------------------------------------------
@@ -421,8 +417,6 @@ module Cinch; module Plugins; class GameBot
 
     @last_invitation[game.channel_name] = Time.now.to_i
 
-    command = self.bg3po_invite_command(game.channel_name)
-    User('BG3PO').send(command) if command && !command.empty?
     m.user.send('Invitation has been sent.')
 
     settings = load_settings || {}
