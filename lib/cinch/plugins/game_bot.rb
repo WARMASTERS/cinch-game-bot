@@ -2,14 +2,17 @@ require 'cinch'
 require 'set'
 require 'yaml'
 
-$pm_users = Set.new
-
 module Cinch
+  class << self
+    attr_reader :pm_users
+  end
+  @pm_users = Set.new
+
   class Message
     old_reply = instance_method(:reply)
 
     define_method(:reply) do |*args|
-      if self.channel.nil? && !$pm_users.include?(self.user.nick)
+      if self.channel.nil? && !Cinch.pm_users.include?(self.user.nick)
         self.user.send(args[0], true)
       else
         old_reply.bind(self).(*args)
@@ -21,7 +24,7 @@ module Cinch
     old_send = instance_method(:send)
 
     define_method(:send) do |*args|
-      old_send.bind(self).(args[0], !$pm_users.include?(self.nick))
+      old_send.bind(self).(args[0], !Cinch.pm_users.include?(self.nick))
     end
   end
 end
@@ -51,7 +54,9 @@ module Cinch; module Plugins; class GameBot
     @user_games = {}
 
     settings = load_settings || {}
-    $pm_users = settings['pm_users'] || Set.new
+    if (pm_users = settings['pm_users'])
+      Cinch.pm_users.merge(pm_users)
+    end
 
     @last_invitation = Hash.new(0)
   end
@@ -361,7 +366,7 @@ module Cinch; module Plugins; class GameBot
 
   def noticeme(m, toggle, nick)
     if toggle && toggle.downcase == 'list' && self.is_mod?(m.user)
-      m.reply("PRIVMSG users: #{$pm_users.to_a}")
+      m.reply("PRIVMSG users: #{Cinch.pm_users.to_a}")
       return
     end
 
@@ -369,18 +374,18 @@ module Cinch; module Plugins; class GameBot
     target = nick && self.is_mod?(m.user) ? nick : m.user.nick
 
     if toggle && toggle.downcase == 'on'
-      $pm_users.delete(target)
+      Cinch.pm_users.delete(target)
       settings = load_settings || {}
-      settings['pm_users'] = $pm_users
+      settings['pm_users'] = Cinch.pm_users
       save_settings(settings)
     elsif toggle && toggle.downcase == 'off'
-      $pm_users.add(target)
+      Cinch.pm_users.add(target)
       settings = load_settings || {}
-      settings['pm_users'] = $pm_users
+      settings['pm_users'] = Cinch.pm_users
       save_settings(settings)
     end
 
-    m.reply("Private communications to #{target} will occur in #{$pm_users.include?(target) ? 'PRIVMSG' : 'NOTICE'}")
+    m.reply("Private communications to #{target} will occur in #{Cinch.pm_users.include?(target) ? 'PRIVMSG' : 'NOTICE'}")
   end
 
   def intro(m)
