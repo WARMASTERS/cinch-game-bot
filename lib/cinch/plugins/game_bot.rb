@@ -77,11 +77,11 @@ module Cinch; module Plugins; class GameBot
     match(/unsubscribe/i,       method: :unsubscribe)
     match(/intro/i,             method: :intro)
     match(/changelog$/i,        method: :changelog_dir)
-    match(/changelog (\d+)/i,   method: :changelog)
+    match(/changelog\s+(\d+)/i, method: :changelog)
 
     # mod only commands
     match(/reset(?:\s+(##?\w+))?/i,       method: :reset_game)
-    match(/replace (.+?) (.+)/i,          method: :replace_user)
+    match(/replace\s+(.+?)\s+(.+)/i,      method: :replace_user)
     match(/kick\s+(.+)/i,                 method: :kick_user)
     match(/room(?:\s+(##?\w+))?\s+(.+)/i, method: :room_mode)
 
