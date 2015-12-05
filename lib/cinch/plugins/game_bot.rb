@@ -68,6 +68,7 @@ module Cinch; module Plugins; class GameBot
     leave
     start
     who
+    status
     invite
     subscribe
     unsubscribe
@@ -89,6 +90,7 @@ module Cinch; module Plugins; class GameBot
 
     # game
     match(/who(?:\s*(##?\w+)\s*)?$/i, method: :list_players)
+    match(/status/i,                  method: :status)
 
     # other
     match(/invite/i,            method: :invite)
@@ -162,6 +164,10 @@ module Cinch; module Plugins; class GameBot
 
   def do_replace_user(game, replaced_user, replacing_user)
     Channel(game.channel_name).send("Implementing classes should override do_replace_user")
+  end
+
+  def game_status(game)
+    'Implementing classes should override game_status'
   end
 
   #--------------------------------------------------------------------------------
@@ -313,6 +319,23 @@ module Cinch; module Plugins; class GameBot
       else
         m.reply(waiting_room.users.map { |u| dehighlight_nick(u.nick) }.join(' '))
       end
+    end
+  end
+
+  def status(m)
+    game = self.game_of(m)
+    return unless game
+
+    if game.started?
+      m.reply(self.game_status(game))
+      return
+    end
+
+    waiting_room = @waiting_rooms[game.channel_name]
+    if waiting_room.empty?
+      m.reply("No game of #{game.class::GAME_NAME} in progress. Join and start one!")
+    else
+      m.reply("A game of #{game.class::GAME_NAME} is forming. #{waiting_room.size} players have joined: #{waiting_room.users.map(&:name).join(', ')}")
     end
   end
 
