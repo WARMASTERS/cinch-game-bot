@@ -416,7 +416,6 @@ module Cinch; module Plugins; class GameBot
     elsif game.started?
       m.user.send("You can't kick someone while a game is in progress.")
     else
-      user = User(nick)
       self.remove_user_from_waiting_room(user, game.channel_name)
     end
   end
