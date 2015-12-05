@@ -15,7 +15,6 @@ Game#initialize(String channel_name)
 Game#channel_name               -> String (typically what was passed to initialize)
 Game#started?                   -> Boolean
 Game#users                      -> [Cinch::User]
-Game#has_player?(Cinch::User)   -> Boolean
 Game#replace_player(Cinch::User(out), Cinch::User(in)) -> Boolean (successfuly replaced out with in?)
 ```
 

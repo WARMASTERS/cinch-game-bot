@@ -116,8 +116,9 @@ module Cinch; module Plugins; class GameBot
   #--------------------------------------------------------------------------------
 
   def voice_if_in_game(m)
-    game = @games[m.channel.name]
-    m.channel.voice(m.user) if game && game.has_player?(m.user)
+    channel_game = @games[m.channel.name]
+    user_game = @user_games[m.user]
+    m.channel.voice(m.user) if channel_game == user_game
   end
 
   def remove_if_not_started(m, user)
