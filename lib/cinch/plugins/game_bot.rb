@@ -61,7 +61,7 @@ module Cinch; module Plugins; class GameBot
     @last_invitation = Hash.new(0)
   end
 
-  def self.common_commands
+  def self.add_common_commands
     # A recommended plugin prefix could be:
     # c.plugins.prefix = lambda { |m| m.channel.nil? ? /^!?/ : /^#{m.bot.name}[:,]?\s+|^!/  }
     match(/join(?:\s*(##?\w+))?/i, method: :join)

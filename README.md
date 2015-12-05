@@ -6,7 +6,7 @@ cinch-game-bot is a generic skeleton for turn-based games written in [Cinch](htt
 
 Extend GameBot and override the methods listed in the section "Implementing classes should override these"
 
-You will probably want to call `common_commands` in the extending class.
+You will probably want to call `add_common_commands` in the extending class.
 
 The Game class provided in `game_class` must have the following instance methods:
 
