@@ -478,15 +478,13 @@ module Cinch; module Plugins; class GameBot
     return @games[m.channel.name] if m.channel
 
     # If in private and channel specified, show that channel.
-    return game = @games[channel_name] if channel_name
+    return @games[channel_name] if channel_name
 
     # If in private and channel not specified, show the game the player is in.
-    game = @user_games[m.user]
-
-    # and advise them if they aren't in any
-    m.reply("To #{warn_user[0]} via PM you must specify the channel: #{warn_user[1]} #channel") if game.nil? && !warn_user.nil?
-
-    game
+    @user_games[m.user].tap { |game|
+      # and advise them if they aren't in any
+      m.reply("To #{warn_user[0]} via PM you must specify the channel: #{warn_user[1]} #channel") if game.nil? && !warn_user.nil?
+    }
   end
 
   def noticeme(m, toggle, nick)
