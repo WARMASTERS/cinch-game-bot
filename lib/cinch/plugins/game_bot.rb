@@ -248,7 +248,7 @@ module Cinch; module Plugins; class GameBot
     channel.voiced.each { |user| channel.devoice(user) }
   end
 
-  def remove_user_from_game(user, game, announce = true)
+  def remove_user_from_game(user, game, announce: true)
     if game.remove_player(user)
       Channel(game.channel_name).send("#{user.nick} has left the game (#{game.size}/#{game.class::MAX_PLAYERS})") if announce
       Channel(game.channel_name).devoice(user)
