@@ -14,11 +14,8 @@ The Game class provided in `game_class` must have the following instance methods
 Game#initialize(String channel_name)
 Game#channel_name               -> String (typically what was passed to initialize)
 Game#started?                   -> Boolean
-Game#size                       -> Fixnum (number of players currently in the game)
 Game#users                      -> [Cinch::User]
 Game#has_player?(Cinch::User)   -> Boolean
-Game#add_player(Cinch::User)    -> Boolean (was add successful?)
-Game#remove_player(Cinch::User) -> Boolean (was remove successful?)
 Game#replace_player(Cinch::User(out), Cinch::User(in)) -> Boolean (successfuly replaced out with in?)
 ```
 

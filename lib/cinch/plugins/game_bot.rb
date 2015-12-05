@@ -44,9 +44,11 @@ module Cinch; module Plugins; class GameBot
     @idle_timer_length    = config[:allowed_idle] || 900
     @invite_timer_length  = config[:invite_reset] || 900
 
+    @waiting_rooms = {}
     @games = {}
     @idle_timers = {}
     @channel_names.each { |c|
+      @waiting_rooms[c] = WaitingRoom.new(c, self.game_class::MAX_PLAYERS)
       @games[c] = self.game_class.new(c)
       @idle_timers[c] = self.start_idle_timer(c)
     }
@@ -120,7 +122,7 @@ module Cinch; module Plugins; class GameBot
 
   def remove_if_not_started(m, user)
     game = @user_games[user]
-    self.remove_user_from_game(user, game) if game && !game.started?
+    self.remove_user_from_waiting_room(user, game.channel_name) if game && !game.started?
   end
 
   def devoice_everyone_on_start(m, user)
@@ -129,11 +131,10 @@ module Cinch; module Plugins; class GameBot
 
   def start_idle_timer(channel_name)
     Timer(300) do
-      game = @games[channel_name]
-      game.users.each do |user|
+      @waiting_rooms[channel_name].users.each do |user|
         user.refresh
         if user.idle > @idle_timer_length
-          self.remove_user_from_game(user, game) unless game.started?
+          self.remove_user_from_waiting_room(user, channel_name)
           user.send("You have been removed from the #{channel_name} game due to inactivity.")
         end
       end
@@ -148,7 +149,7 @@ module Cinch; module Plugins; class GameBot
     # Implementing classes should override game_class
   end
 
-  def do_start_game(m, game, options)
+  def do_start_game(m, game, users, options)
     Channel(game.channel_name).send('Implementing classes should override do_start_game')
     # Return false or nil if the game failed to start, otherwise return something truthy.
     false
@@ -160,6 +161,47 @@ module Cinch; module Plugins; class GameBot
 
   def do_replace_user(game, replaced_user, replacing_user)
     Channel(game.channel_name).send("Implementing classes should override do_replace_user")
+  end
+
+  #--------------------------------------------------------------------------------
+  # Main IRC Interface Methods
+  #--------------------------------------------------------------------------------
+
+  class WaitingRoom
+    attr_reader :channel_name, :users, :capacity
+
+    def initialize(channel_name, capacity)
+      # We'd like to use a Set, but User.nick can change.
+      # Performance shouldn't be too terrible since waiting rooms should be small.
+      @users = []
+      @capacity = capacity
+      @channel_name = channel_name
+    end
+
+    def size
+      @users.size
+    end
+
+    def empty?
+      @users.empty?
+    end
+
+    def include?(user)
+      @users.include?(user)
+    end
+
+    def add(user)
+      @users << user
+    end
+
+    def remove(user)
+      @users.delete(user)
+    end
+    alias :delete :remove
+
+    def clear
+      @users.clear
+    end
   end
 
   #--------------------------------------------------------------------------------
@@ -186,7 +228,8 @@ module Cinch; module Plugins; class GameBot
     end
 
     game = @games[channel.name]
-    unless game
+    waiting_room = @waiting_rooms[channel.name]
+    unless game && waiting_room
       m.reply(channel.name + ' is not a valid channel to join', true)
       return
     end
@@ -198,15 +241,18 @@ module Cinch; module Plugins; class GameBot
 
     if game.started?
       m.reply('Game has already started.', true)
-    elsif game.size >= game.class::MAX_PLAYERS
-      m.reply('Game is at max players.', true)
-    elsif game.add_player(m.user)
-      channel.send("#{m.user.nick} has joined the game (#{game.size}/#{game.class::MAX_PLAYERS})")
-      channel.voice(m.user)
-      @user_games[m.user] = game
-    else
-      m.reply('Could not join for an unknown reason.', true)
+      return
     end
+
+    if waiting_room.size >= waiting_room.capacity
+      m.reply("Game is already at #{waiting_room.capacity} players, the maximum supported for #{game.class::GAME_NAME}.", true)
+      return
+    end
+
+    waiting_room.add(m.user)
+    channel.send("#{m.user.nick} has joined the game (#{waiting_room.size}/#{waiting_room.capacity})")
+    channel.voice(m.user)
+    @user_games[m.user] = game
   end
 
   def leave(m)
@@ -216,7 +262,7 @@ module Cinch; module Plugins; class GameBot
     if game.started?
       m.reply('You cannot leave a game in progress.', true)
     else
-      self.remove_user_from_game(m.user, game)
+      self.remove_user_from_waiting_room(m.user, game.channel_name)
     end
   end
 
@@ -226,18 +272,21 @@ module Cinch; module Plugins; class GameBot
 
     return if game.started?
 
-    unless game.size >= game.class::MIN_PLAYERS
-      m.reply("Need at least #{game.class::MIN_PLAYERS} to start a game.", true)
+    waiting_room = @waiting_rooms[game.channel_name]
+    unless waiting_room && waiting_room.size >= game.class::MIN_PLAYERS
+      m.reply("Need at least #{game.class::MIN_PLAYERS} to start a game of #{game.class::GAME_NAME}.", true)
       return
     end
 
-    unless game.has_player?(m.user)
+    unless waiting_room.include?(m.user)
       m.reply('You are not in the game.', true)
       return
     end
 
-    successful = self.do_start_game(m, game, options)
-    @idle_timers[game.channel_name].stop if successful
+    if self.do_start_game(m, game, waiting_room.users, options)
+      @idle_timers[game.channel_name].stop
+      waiting_room.clear
+    end
   end
 
   def start_new_game(game)
@@ -254,10 +303,15 @@ module Cinch; module Plugins; class GameBot
     game = self.game_of(m, channel_name, ['list players', '!who'])
     return unless game
 
-    if game.users.empty?
-      m.reply('No one has joined the game yet.')
-    else
+    if game.started?
       m.reply(game.users.map { |u| dehighlight_nick(u.nick) }.join(' '))
+    else
+      waiting_room = @waiting_rooms[game.channel_name]
+      if waiting_room.empty?
+        m.reply('No one has joined the game yet.')
+      else
+        m.reply(waiting_room.users.map { |u| dehighlight_nick(u.nick) }.join(' '))
+      end
     end
   end
 
@@ -265,12 +319,15 @@ module Cinch; module Plugins; class GameBot
     channel.voiced.each { |user| channel.devoice(user) }
   end
 
-  def remove_user_from_game(user, game, announce: true)
-    if game.remove_player(user)
-      Channel(game.channel_name).send("#{user.nick} has left the game (#{game.size}/#{game.class::MAX_PLAYERS})") if announce
-      Channel(game.channel_name).devoice(user)
-      @user_games.delete(user)
-    end
+  def remove_user_from_waiting_room(user, channel_name, announce: true)
+    waiting_room = @waiting_rooms[channel_name]
+    return unless waiting_room && waiting_room.include?(user)
+
+    waiting_room.remove(user)
+    channel = Channel(channel_name)
+    channel.send("#{user.nick} has left the game (#{waiting_room.size}/#{waiting_room.capacity})") if announce
+    channel.devoice(user)
+    @user_games.delete(user)
   end
 
   def dehighlight_nick(nickname)
@@ -315,7 +372,7 @@ module Cinch; module Plugins; class GameBot
       m.user.send("You can't kick someone while a game is in progress.")
     else
       user = User(nick)
-      self.remove_user_from_game(user, game)
+      self.remove_user_from_waiting_room(user, game.channel_name)
     end
   end
 
@@ -334,7 +391,14 @@ module Cinch; module Plugins; class GameBot
       return
     end
 
-    success = game.replace_player(user1, user2)
+    if game.started?
+      success = game.replace_player(user1, user2)
+    else
+      waiting_room = @waiting_rooms[game.channel_name]
+      waiting_room.remove(user1)
+      waiting_room.add(user2)
+      success = true
+    end
     return unless success
 
     # devoice/voice the players
@@ -347,7 +411,7 @@ module Cinch; module Plugins; class GameBot
     # inform channel
     Channel(game.channel_name).send("#{user1.nick} has been replaced with #{user2.nick}")
 
-    self.do_replace_user(game, user1, user2)
+    self.do_replace_user(game, user1, user2) if game.started?
   end
 
   def room_mode(m, channel_name, mode)
