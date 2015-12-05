@@ -72,12 +72,12 @@ module Cinch; module Plugins; class GameBot
     match(/who(?:\s*(##?\w+)\s*)?$/i, method: :list_players)
 
     # other
-    match(/invite/i,          method: :invite)
-    match(/subscribe/i,       method: :subscribe)
-    match(/unsubscribe/i,     method: :unsubscribe)
-    match(/intro/i,           method: :intro)
-    match(/changelog$/i,      method: :changelog_dir)
-    match(/changelog (\d+)/i, method: :changelog)
+    match(/invite/i,            method: :invite)
+    match(/subscribe/i,         method: :subscribe)
+    match(/unsubscribe/i,       method: :unsubscribe)
+    match(/intro/i,             method: :intro)
+    match(/changelog$/i,        method: :changelog_dir)
+    match(/changelog (\d+)/i,   method: :changelog)
 
     # mod only commands
     match(/reset(?:\s+(##?\w+))?/i,       method: :reset_game)
