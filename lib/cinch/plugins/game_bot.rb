@@ -171,43 +171,64 @@ module Cinch; module Plugins; class GameBot
   end
 
   #--------------------------------------------------------------------------------
-  # Main IRC Interface Methods
+  # Waiting room - players waiting to join games not yet formed
   #--------------------------------------------------------------------------------
 
   class WaitingRoom
-    attr_reader :channel_name, :users, :capacity
+    # Games can associate arbitrary data with players in the waiting room.
+    Player = Struct.new(:user, :data)
+    class DataProxy
+      def initialize(room)
+        @room = room
+      end
+
+      def [](user)
+        @room.players.find { |u| u.user == user }.data
+      end
+    end
+
+    attr_reader :channel_name, :players, :capacity
 
     def initialize(channel_name, capacity)
-      # We'd like to use a Set, but User.nick can change.
+      # We'd like to use a Hash keyed by User, but User.nick (used by equality) can change.
       # Performance shouldn't be too terrible since waiting rooms should be small.
-      @users = []
+      @players = []
       @capacity = capacity
       @channel_name = channel_name
     end
 
+    def users
+      @players.map(&:user)
+    end
+
     def size
-      @users.size
+      @players.size
     end
 
     def empty?
-      @users.empty?
+      @players.empty?
     end
 
     def include?(user)
-      @users.include?(user)
+      @players.any? { |u| u.user == user }
     end
 
     def add(user)
-      @users << user
+      @players << Player.new(user, {})
     end
 
     def remove(user)
-      @users.delete(user)
+      @players.reject! { |u| u.user == user }
     end
     alias :delete :remove
 
     def clear
-      @users.clear
+      @players.clear
+    end
+
+    # All I want is to be able to say room.data[user][:stuff] = something
+    def data
+      DataProxy.new(self)
     end
   end
 
@@ -290,7 +311,7 @@ module Cinch; module Plugins; class GameBot
       return
     end
 
-    if self.do_start_game(m, game, waiting_room.users, options)
+    if self.do_start_game(m, game, waiting_room.players, options)
       @idle_timers[game.channel_name].stop
       waiting_room.clear
     end
