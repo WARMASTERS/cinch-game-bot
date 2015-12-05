@@ -1,0 +1,49 @@
+require 'cinch'
+
+module Cinch; module Plugins; class ExamplePlugin < GameBot
+  include Cinch::Plugin
+
+  class ExampleGame
+    GAME_NAME = 'Example Game'.freeze
+    MIN_PLAYERS = 2
+    MAX_PLAYERS = 3
+
+    attr_reader :channel_name, :users
+
+    def initialize(channel_name, users, can_replace: true)
+      @channel_name = channel_name
+      @users = users.sort_by(&:nick)
+      @can_replace = can_replace
+    end
+
+    def replace_player(u1, u2)
+      return false unless @can_replace
+      @users.delete(u1)
+      @users << u2
+      true
+    end
+  end
+
+  add_common_commands
+
+  def game_class
+    ExampleGame
+  end
+
+  def do_start_game(m, channel_name, players, settings, start_args)
+    return nil if start_args.include?('fail')
+    ExampleGame.new(channel_name, players.map(&:user), can_replace: !start_args.include?('noreplace'))
+  end
+
+  def do_reset_game(game)
+    Channel(game.channel_name).send('game has been reset')
+  end
+
+  def do_replace_user(game, replaced_user, replacing_user)
+    Channel(game.channel_name).send("#{replaced_user.nick} replaced by #{replacing_user.nick}")
+  end
+
+  def game_status(game)
+    "Game started with players #{game.users.map(&:nick).join(', ')}"
+  end
+end; end; end
