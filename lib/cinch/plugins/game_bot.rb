@@ -61,6 +61,23 @@ module Cinch; module Plugins; class GameBot
     @last_invitation = Hash.new(0)
   end
 
+  COMMON_COMMANDS = Set.new(%w(
+    join
+    leave
+    start
+    who
+    invite
+    subscribe
+    unsubscribe
+    intro
+    changelog
+    reset
+    replace
+    kick
+    room
+    notice
+  )).freeze
+
   def self.add_common_commands
     # A recommended plugin prefix could be:
     # c.plugins.prefix = lambda { |m| m.channel.nil? ? /^!?/ : /^#{m.bot.name}[:,]?\s+|^!/  }
