@@ -461,7 +461,7 @@ module Cinch; module Plugins; class GameBot
       return
     end
 
-    if User(m.user).authed?
+    if m.user.authed?
       subscribers << m.user.nick
       settings['subscribers'] = subscribers
       save_settings(settings)
@@ -479,7 +479,7 @@ module Cinch; module Plugins; class GameBot
       m.user.send("You are not subscribed to the invitation list.")
     end
 
-    if User(m.user).authed?
+    if m.user.authed?
       subscribers.delete_if { |sub| sub == m.user.nick }
       settings['subscribers'] = subscribers
       save_settings(settings)
