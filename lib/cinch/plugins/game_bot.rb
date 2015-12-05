@@ -290,7 +290,7 @@ module Cinch; module Plugins; class GameBot
     return unless self.is_mod?(m.user)
     game = self.game_of(m, channel_name, ['reset a game', '!reset'])
 
-    return unless game
+    return unless game && game.started?
     channel = Channel(game.channel_name)
 
     self.do_reset_game(game)
