@@ -8,12 +8,10 @@ Extend GameBot and override the methods listed in the section "Implementing clas
 
 You will probably want to call `add_common_commands` in the extending class.
 
-The Game class provided in `game_class` must have the following instance methods:
+The return value of `do_start_game`, if it is truthy, must have the following methods:
 
 ```
-Game#initialize(String channel_name)
-Game#channel_name               -> String (typically what was passed to initialize)
-Game#started?                   -> Boolean
+Game#channel_name               -> String (typically what was passed to do_start_game)
 Game#users                      -> [Cinch::User]
 Game#replace_player(Cinch::User(out), Cinch::User(in)) -> Boolean (successfuly replaced out with in?)
 ```
