@@ -50,7 +50,7 @@ module Cinch; module Plugins; class GameBot
     @games = {}
     @idle_timers = {}
     @channel_names.each { |c|
-      @waiting_rooms[c] = WaitingRoom.new(c, self.game_class::MAX_PLAYERS)
+      @waiting_rooms[c] = WaitingRoom.new(c, self.max_players)
       @idle_timers[c] = self.start_idle_timer(c)
     }
 
@@ -150,8 +150,19 @@ module Cinch; module Plugins; class GameBot
   # Implementing classes should override these
   #--------------------------------------------------------------------------------
 
-  def game_class
-    # Implementing classes should override game_class
+  def min_players
+    # Implementing classes should override
+    0
+  end
+
+  def max_players
+    # Implementing classes should override
+    0
+  end
+
+  def game_name
+    # Implementing classes should override
+    'Game'.freeze
   end
 
   def do_start_game(m, channel_name, users, settings, start_args)
@@ -281,7 +292,7 @@ module Cinch; module Plugins; class GameBot
     end
 
     if waiting_room.size >= waiting_room.capacity
-      m.reply("Game is already at #{waiting_room.capacity} players, the maximum supported for #{game_class::GAME_NAME}.", true)
+      m.reply("Game is already at #{waiting_room.capacity} players, the maximum supported for #{self.game_name}.", true)
       return
     end
 
@@ -308,8 +319,8 @@ module Cinch; module Plugins; class GameBot
     waiting_room = self.waiting_room_of(m)
     return unless waiting_room
 
-    unless waiting_room.size >= self.game_class::MIN_PLAYERS
-      m.reply("Need at least #{self.game_class::MIN_PLAYERS} to start a game of #{self.game_class::GAME_NAME}.", true)
+    unless waiting_room.size >= self.min_players
+      m.reply("Need at least #{self.min_players} to start a game of #{self.game_name}.", true)
       return
     end
 
@@ -363,9 +374,9 @@ module Cinch; module Plugins; class GameBot
     return unless waiting_room
 
     if waiting_room.empty?
-      m.reply("No game of #{self.game_class::GAME_NAME} in progress. Join and start one!")
+      m.reply("No game of #{self.game_name} in progress. Join and start one!")
     else
-      m.reply("A game of #{self.game_class::GAME_NAME} is forming. #{waiting_room.size} players have joined: #{waiting_room.users.map(&:name).join(', ')}")
+      m.reply("A game of #{self.game_name} is forming. #{waiting_room.size} players have joined: #{waiting_room.users.map(&:name).join(', ')}")
     end
   end
 
@@ -579,7 +590,7 @@ module Cinch; module Plugins; class GameBot
       next if current_players.include?(subscriber)
       u = User(subscriber)
       u.refresh
-      u.send("A game of #{self.game_class::GAME_NAME} is gathering in #{waiting_room.channel_name}.") if u.online?
+      u.send("A game of #{self.game_name} is gathering in #{waiting_room.channel_name}.") if u.online?
     end
   end
 

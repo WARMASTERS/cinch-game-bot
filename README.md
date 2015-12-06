@@ -16,14 +16,6 @@ Game#users                      -> [Cinch::User]
 Game#replace_player(Cinch::User(out), Cinch::User(in)) -> Boolean (successfuly replaced out with in?)
 ```
 
-The Game class provided in `game_class` must have the following constants:
-
-```
-Game::GAME_NAME -> String
-Game::MAX_PLAYERS -> Fixnum
-Game::MIN_PLAYERS -> Fixnum
-```
-
 Overall, note that the above interface makes no assumptions as to what `Cinch::User` can do.
 Because of this, a conforming Game class could substitute any other class for `Cinch::User`.
 As an example, one might simply use `String` when testing.

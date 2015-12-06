@@ -4,10 +4,6 @@ module Cinch; module Plugins; class ExamplePlugin < GameBot
   include Cinch::Plugin
 
   class ExampleGame
-    GAME_NAME = 'Example Game'.freeze
-    MIN_PLAYERS = 2
-    MAX_PLAYERS = 3
-
     attr_reader :channel_name, :users
 
     def initialize(channel_name, users, can_replace: true)
@@ -26,9 +22,9 @@ module Cinch; module Plugins; class ExamplePlugin < GameBot
 
   add_common_commands
 
-  def game_class
-    ExampleGame
-  end
+  def min_players; 2 end
+  def max_players; 3 end
+  def game_name; 'Example Game'.freeze end
 
   def do_start_game(m, channel_name, players, settings, start_args)
     return nil if start_args.include?('fail')
