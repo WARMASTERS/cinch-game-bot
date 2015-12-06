@@ -61,8 +61,6 @@ module Cinch; module Plugins; class GameBot
     if (pm_users = settings['pm_users'])
       Cinch.pm_users.merge(pm_users)
     end
-
-    @last_invitation = Hash.new(0)
   end
 
   COMMON_COMMANDS = Set.new(%w(
@@ -192,6 +190,7 @@ module Cinch; module Plugins; class GameBot
     end
 
     attr_reader :channel_name, :players, :capacity, :settings
+    attr_accessor :last_invitation
 
     def initialize(channel_name, capacity)
       # We'd like to use a Hash keyed by User, but User.nick (used by equality) can change.
@@ -200,6 +199,7 @@ module Cinch; module Plugins; class GameBot
       @capacity = capacity
       @channel_name = channel_name
       @settings = {}
+      @last_invitation = 0
     end
 
     def users
@@ -560,27 +560,26 @@ module Cinch; module Plugins; class GameBot
 
   def invite(m)
     return if self.game_of(m)
-    return unless self.waiting_room_of(m)
+    waiting_room = self.waiting_room_of(m)
+    return unless waiting_room
 
-    last_invitation = @last_invitation[game.channel_name]
-    if last_invitation + @invite_timer_length > Time.now.to_i
+    if waiting_room.last_invitation + @invite_timer_length > Time.now.to_i
       m.reply('An invitation cannot be sent out again so soon.', true)
       return
     end
 
-    @last_invitation[game.channel_name] = Time.now.to_i
+    waiting_room.last_invitation = Time.now.to_i
 
     m.user.send('Invitation has been sent.')
 
     settings = load_settings || {}
     subscribers = settings['subscribers']
-    current_players = game.users.map(&:nick)
+    current_players = waiting_room.users.map(&:nick)
     subscribers.each do |subscriber|
-      unless current_players.include?(subscriber)
-        u = User(subscriber)
-        u.refresh
-        u.send("A game of #{game.class::GAME_NAME} is gathering in #{game.channel_name}...") if u.online?
-      end
+      next if current_players.include?(subscriber)
+      u = User(subscriber)
+      u.refresh
+      u.send("A game of #{self.game_class::GAME_NAME} is gathering in #{waiting_room.channel_name}.") if u.online?
     end
   end
 
