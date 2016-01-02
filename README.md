@@ -2,6 +2,8 @@
 
 cinch-game-bot is a generic skeleton for turn-based games written in [Cinch](https://github.com/cinchrb/cinch).
 
+[![Build Status](https://travis-ci.org/petertseng/cinch-game_bot.svg?branch=master)](https://travis-ci.org/petertseng/cinch-game_bot)
+
 ## Interface
 
 Extend GameBot and override the methods listed in the section "Implementing classes should override these"
