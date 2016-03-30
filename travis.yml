@@ -9,4 +9,4 @@ matrix:
     - rvm: '2.0'
     - rvm: '2.1'
     - rvm: '2.2'
-script: gem install cinch-test cinch simplecov rspec && rspec
+script: rspec
