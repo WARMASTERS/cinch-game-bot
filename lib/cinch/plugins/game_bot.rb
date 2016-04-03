@@ -585,6 +585,7 @@ module Cinch; module Plugins; class GameBot
 
     settings = load_settings || {}
     subscribers = settings['subscribers']
+    return unless subscribers
     current_players = waiting_room.users.map(&:nick)
     subscribers.each do |subscriber|
       next if current_players.include?(subscriber)
