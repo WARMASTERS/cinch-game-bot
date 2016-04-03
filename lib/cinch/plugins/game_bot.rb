@@ -356,6 +356,8 @@ module Cinch; module Plugins; class GameBot
     end
 
     waiting_room = self.waiting_room_of(m, channel_name, ['list players', '!who'])
+    return unless waiting_room
+
     if waiting_room.empty?
       m.reply('No one has joined the game yet.')
     else
