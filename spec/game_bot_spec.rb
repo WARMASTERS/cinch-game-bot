@@ -1,14 +1,8 @@
-require 'simplecov'
-SimpleCov.start { add_filter '/spec/' }
+require 'spec_helper'
 
 require 'cinch/test'
 require 'cinch/plugins/game_bot'
 require 'example_plugin'
-
-RSpec.configure { |c|
-  c.warnings = true
-  c.disable_monkey_patching!
-}
 
 def get_replies_text(m)
   replies = get_replies(m)
