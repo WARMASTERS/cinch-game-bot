@@ -636,9 +636,7 @@ module Cinch; module Plugins; class GameBot
   #--------------------------------------------------------------------------------
 
   def save_settings(settings)
-    output = File.new(@settings_file, 'w')
-    output.puts(YAML.dump(settings))
-    output.close
+    File.open(@settings_file, ?w) { |f| f.puts(YAML.dump(settings)) }
   end
 
   def load_settings
