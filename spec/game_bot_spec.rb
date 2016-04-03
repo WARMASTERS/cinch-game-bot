@@ -58,6 +58,7 @@ RSpec.describe Cinch::Plugins::GameBot do
   let(:opts) {{
     channels: [channel1],
     settings: '/dev/null',
+    changelog_file: 'my-changes',
     mods: [player1],
   }}
   let(:bot) {
@@ -367,14 +368,35 @@ RSpec.describe Cinch::Plugins::GameBot do
   end
 
   describe '!changelog' do
+    before(:each) do
+      # settings file, not related to this test
+      allow(File).to receive(:exist?).with('/dev/null').and_call_original
+      allow(YAML).to receive(:load_file).with('/dev/null').and_call_original
+
+      expect(File).to receive(:exist?).with('my-changes').and_return(true)
+      expect(YAML).to receive(:load_file).with('my-changes').and_return([{
+        'date' => 'date1',
+        'changes' => ['change1', 'change2'],
+      }])
+    end
+
     it 'responds with no number' do
-      get_replies(msg('!changelog'))
-      # I don't have a useful test right now since I don't have a fake changelog.
+      replies = get_replies_text(msg('!changelog'))
+      expect(replies).to be == ['1 - date1 - 2 changes']
     end
 
     it 'responds with number' do
       replies = get_replies_text(msg('!changelog 1'))
-      expect(replies).to be == ['No changes on page 1!']
+      expect(replies).to be == [
+        'Changes for date1:',
+        '- change1',
+        '- change2',
+      ]
+    end
+
+    it 'responds with invalid number' do
+      replies = get_replies_text(msg('!changelog 2'))
+      expect(replies).to be == ['No changes on page 2!']
     end
   end
 
