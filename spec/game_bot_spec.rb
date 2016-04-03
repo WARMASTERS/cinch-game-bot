@@ -204,6 +204,17 @@ RSpec.describe Cinch::Plugins::GameBot do
       # What to test here? This just tests that we have no crash. !status and !who are testing a bit.
     end
 
+    it 'does not start the game if the game fails to start somehow' do
+      join(msg('!join', nick: player1))
+      join(msg('!join', nick: player2))
+      replies = get_replies(msg('!start fail'))
+      expect(replies).to be_empty
+      # Best way to determine that the game hasn't started?
+      replies = get_replies_text(msg('!status'))
+      expect(replies).to be_all { |r| r.include?('is forming') }
+      expect(replies).to_not be_any { |r| r.include?('started') }
+    end
+
     it 'disallows start with too few players' do
       join(msg('!join', nick: player1))
       get_replies(msg('!start'))
