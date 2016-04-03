@@ -22,6 +22,8 @@ Overall, note that the above interface makes no assumptions as to what `Cinch::U
 Because of this, a conforming Game class could substitute any other class for `Cinch::User`.
 As an example, one might simply use `String` when testing.
 
+See `spec/example_plugin.rb` for an example conforming plugin and associated game.
+
 ## Configuration
 
 Configuration is passed to a plugin via `cinch`'s `config` method.
