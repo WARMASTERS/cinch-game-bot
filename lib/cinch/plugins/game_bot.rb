@@ -643,19 +643,11 @@ module Cinch; module Plugins; class GameBot
 
   def load_settings
     return {} unless File.exist?(@settings_file)
-    output = File.new(@settings_file, 'r')
-    settings = YAML.load(output.read)
-    output.close
-
-    settings
+    YAML.load_file(@settings_file)
   end
 
   def load_changelog
     return [] unless File.exist?(@changelog_file)
-    output = File.new(@changelog_file, 'r')
-    changelog = YAML.load(output.read)
-    output.close
-
-    changelog
+    YAML.load_file(@changelog_file)
   end
 end; end; end
