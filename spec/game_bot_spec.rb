@@ -416,4 +416,64 @@ RSpec.describe Cinch::Plugins::GameBot do
       expect(chan.messages).to be_empty
     end
   end
+
+  describe '!notice' do
+    before(:each) { Cinch.pm_users.clear }
+
+    it 'it uses NOTICE if turned on' do
+      Cinch.pm_users.add(player1)
+      expect(plugin).to receive(:save_settings).with('pm_users' => [])
+
+      replies = get_replies_text(msg('!notice on', nick: player1))
+
+      expect(replies).to be_all { |r| r.include?('NOTICE') }
+      expect(Cinch.pm_users).not_to include(player1)
+    end
+
+    it 'it uses PRIVMSG if turned off' do
+      expect(plugin).to receive(:save_settings).with('pm_users' => [player1])
+
+      replies = get_replies_text(msg('!notice off', nick: player1))
+
+      expect(replies).to be_all { |r| r.include?('PRIVMSG') }
+      expect(Cinch.pm_users).to include(player1)
+    end
+
+    it 'lets mods list' do
+      get_replies(msg('!notice off', nick: player2))
+
+      replies = get_replies_text(authed_msg('!notice list', nick: player1))
+
+      expect(replies).to be_all { |r| r.include?('PRIVMSG users') }
+      expect(replies).to be_all { |r| r.include?(player2) }
+    end
+
+    it 'does not let non-mods list' do
+      get_replies(msg('!notice off', nick: player2))
+
+      replies = get_replies_text(authed_msg('!notice list', nick: player2))
+
+      expect(replies).to_not be_any { |r| r.include?('PRIVMSG users') }
+    end
+
+    it 'lets mods act on others' do
+      expect(plugin).to receive(:save_settings).with('pm_users' => [player2])
+
+      get_replies(authed_msg("!notice off #{player2}", nick: player1))
+
+      expect(Cinch.pm_users).not_to include(player1)
+      expect(Cinch.pm_users).to include(player2)
+    end
+
+    it 'only lets non-mods act on self' do
+      # player2, non-mod, attempting to act on player1.
+      # Will just act on self instead.
+      expect(plugin).to receive(:save_settings).with('pm_users' => [player2])
+
+      get_replies(authed_msg("!notice off #{player1}", nick: player2))
+
+      expect(Cinch.pm_users).not_to include(player1)
+      expect(Cinch.pm_users).to include(player2)
+    end
+  end
 end
