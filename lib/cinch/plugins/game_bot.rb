@@ -35,7 +35,6 @@ module Cinch; module Plugins; class GameBot
   def initialize(*args)
     super
     @changelog_file = config[:changelog_file] || ''
-    @changelog     = self.load_changelog
 
     @mods          = config[:mods] || []
     @channel_names = config[:channels]
@@ -554,13 +553,13 @@ module Cinch; module Plugins; class GameBot
   end
 
   def changelog_dir(m)
-    @changelog.first(5).each_with_index do |changelog, i|
+    load_changelog.first(5).each_with_index do |changelog, i|
       m.user.send("#{i+1} - #{changelog['date']} - #{changelog['changes'].length} changes")
     end
   end
 
   def changelog(m, page = 1)
-    changelog_page = @changelog[page.to_i-1]
+    changelog_page = load_changelog[page.to_i-1]
     unless changelog_page
       m.user.send("No changes on page #{page}!")
       return
@@ -647,7 +646,9 @@ module Cinch; module Plugins; class GameBot
   end
 
   def load_changelog
-    return [] unless File.exist?(@changelog_file)
-    YAML.load_file(@changelog_file)
+    @changelog ||= begin
+      return [] unless File.exist?(@changelog_file)
+      YAML.load_file(@changelog_file)
+    end
   end
 end; end; end
