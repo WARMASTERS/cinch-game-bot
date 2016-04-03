@@ -486,9 +486,9 @@ module Cinch; module Plugins; class GameBot
     return unless self.is_mod?(m.user)
     case mode
     when 'silent'
-      Channel(channel.name).moderated = true
+      channel.moderated = true
     when 'vocal'
-      Channel(channel.name).moderated = false
+      channel.moderated = false
     end
   end
 
