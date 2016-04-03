@@ -243,6 +243,37 @@ RSpec.describe Cinch::Plugins::GameBot do
       replies = get_replies_text(msg('!who', nick: player1)).map { |t| t.gsub(/[^a-z0-9 ]/, '') }
       expect(replies).to be == ["#{player1} #{player2}"]
     end
+
+    it 'names players in unstarted game by PM if requestor is in one' do
+      first_message = msg('!join', nick: player1)
+      join(first_message)
+      # We need to mess with Cinch::User.new because cinch-test is messing with us.
+      # (creating users who are eql? but whose hash are not the same)
+      expect(Cinch::User).to receive(:new).with(player1, anything).and_return(first_message.user)
+
+      replies = get_replies_text(msg('!who', nick: player1, channel: nil)).map { |t| t.gsub(/[^a-z0-9 ]/, '') }
+
+      expect(replies).to_not be_empty
+      expect(replies).to be_all { |r| r == player1 }
+    end
+
+    it 'asks for a channel if requestor does not specify one by PM' do
+      join(msg('!join', nick: player2))
+
+      replies = get_replies_text(msg('!who', nick: player1, channel: nil))
+
+      expect(replies).to_not be_empty
+      expect(replies).to be_all { |r| r.include?('must specify the channel') }
+    end
+
+    it 'names players in unstarted game by PM if requestor explicitly specifies' do
+      join(msg('!join', nick: player2))
+
+      replies = get_replies_text(msg("!who #{channel1}", nick: player1, channel: nil)).map { |t| t.gsub(/[^a-z0-9 ]/, '') }
+
+      expect(replies).to_not be_empty
+      expect(replies).to be_all { |r| r == player2 }
+    end
   end
 
   describe '!status' do
@@ -263,6 +294,19 @@ RSpec.describe Cinch::Plugins::GameBot do
       get_replies(msg('!start'))
       replies = get_replies_text(msg('!status', nick: player1))
       expect(replies).to be == ["Game started with players test1, test2"]
+    end
+
+    it 'names players in unstarted game by PM if requestor is in one' do
+      first_message = msg('!join', nick: player1)
+      join(first_message)
+      # We need to mess with Cinch::User.new because cinch-test is messing with us.
+      # (creating users who are eql? but whose hash are not the same)
+      expect(Cinch::User).to receive(:new).with(player1, anything).and_return(first_message.user)
+
+      replies = get_replies_text(msg('!status', nick: player1, channel: nil))
+
+      expect(replies).to_not be_empty
+      expect(replies).to be_all { |r| r.include?('is forming') }
     end
   end
 
