@@ -287,6 +287,85 @@ RSpec.describe Cinch::Plugins::GameBot do
     end
   end
 
+  describe '!invite' do
+    it 'sends invites' do
+      expect(plugin).to receive(:load_settings).and_return('subscribers' => ['joe'])
+      joe = instance_double(Cinch::User)
+      expect(plugin).to receive(:User).with('joe').and_return(joe)
+      expect(joe).to receive(:refresh)
+      expect(joe).to receive(:online?).and_return(true)
+      expect(joe).to receive(:send).with(/game.*is gathering/)
+
+      replies = get_replies_text(msg('!invite'))
+      expect(replies).to be == ['Invitation has been sent.']
+    end
+
+    it 'disallows spamming' do
+      get_replies_text(msg('!invite'))
+      expect(plugin).not_to receive(:load_settings)
+      replies = get_replies_text(msg('!invite', nick: player2))
+      expect(replies).to be == ["#{player2}: An invitation cannot be sent out again so soon."]
+    end
+  end
+
+  describe '!subscribe' do
+    it 'requires registration' do
+      m = msg('!subscribe')
+      expect(m.user).to receive(:authed?).and_return(false)
+      expect(plugin).not_to receive(:save_settings)
+
+      replies = get_replies_text(m)
+
+      expect(replies).to be_any { |r| r.include?('identified') }
+    end
+
+    it 'subscribes' do
+      expect(plugin).to receive(:save_settings).with('subscribers' => [player1])
+
+      replies = get_replies_text(authed_msg('!subscribe', nick: player1))
+
+      expect(replies).to be_any { |r| r.include?('been subscribed') }
+    end
+
+    it 'does nothing if already subscribed' do
+      expect(plugin).to receive(:load_settings).and_return('subscribers' => [player1])
+
+      replies = get_replies_text(authed_msg('!subscribe', nick: player1))
+
+      expect(replies).to be_any { |r| r.include?('already subscribed') }
+    end
+  end
+
+  describe '!unsubscribe' do
+    it 'requires registration' do
+      m = msg('!unsubscribe')
+      expect(m.user).to receive(:authed?).and_return(false)
+      allow(plugin).to receive(:load_settings).and_return('subscribers' => [player1])
+      expect(plugin).not_to receive(:save_settings)
+
+      replies = get_replies_text(m)
+
+      expect(replies).to be_any { |r| r.include?('identified') }
+    end
+
+    it 'unsubscribes' do
+      expect(plugin).to receive(:load_settings).and_return('subscribers' => [player1])
+      expect(plugin).to receive(:save_settings).with('subscribers' => [])
+
+      replies = get_replies_text(authed_msg('!unsubscribe', nick: player1))
+
+      expect(replies).to be_any { |r| r.include?('been unsubscribed') }
+    end
+
+    it 'does nothing if not already subscribed' do
+      expect(plugin).not_to receive(:save_settings)
+
+      replies = get_replies_text(authed_msg('!unsubscribe', nick: player1))
+
+      expect(replies).to be_any { |r| r.include?('not subscribed') }
+    end
+  end
+
   describe '!changelog' do
     it 'responds with no number' do
       get_replies(msg('!changelog'))
