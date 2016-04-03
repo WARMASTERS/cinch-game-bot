@@ -265,6 +265,21 @@ RSpec.describe Cinch::Plugins::GameBot do
     end
   end
 
+  describe '#start_new_game' do
+    it 'allows the players to join new games' do
+      first_message = msg('!join', nick: player1)
+      join(first_message)
+      join(msg('!join', nick: player2))
+      get_replies(msg('!start'))
+      allow(plugin).to receive(:Channel).with(channel1).and_return(chan)
+      expect(get_replies_text(msg('!win_game'))).to be == ['CONGRATULATIONS, YOU WIN!']
+
+      expect(Cinch::User).to receive(:new).with(player1, anything).and_return(first_message.user)
+      replies = join(msg('!join', nick: player1)).map(&:text)
+      expect(replies).to be == ["#{player1} has joined the game (1/3)"]
+    end
+  end
+
   describe '!intro' do
     it 'responds' do
       replies = get_replies_text(msg('!intro'))

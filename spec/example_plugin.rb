@@ -22,6 +22,8 @@ module Cinch; module Plugins; class ExamplePlugin < GameBot
 
   add_common_commands
 
+  match(/win_game/i, method: :win_game)
+
   def min_players; 2 end
   def max_players; 3 end
   def game_name; 'Example Game'.freeze end
@@ -41,5 +43,12 @@ module Cinch; module Plugins; class ExamplePlugin < GameBot
 
   def game_status(game)
     "Game started with players #{game.users.map(&:nick).join(', ')}"
+  end
+
+  def win_game(m)
+    game = self.game_of(m)
+    return unless game
+    m.reply('CONGRATULATIONS, YOU WIN!')
+    self.start_new_game(game)
   end
 end; end; end
