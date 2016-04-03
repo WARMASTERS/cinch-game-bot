@@ -36,6 +36,8 @@ class TestChannel < MessageReceiver
   def voiced
     []
   end
+  def voice(_)
+  end
   def devoice(_)
   end
   def moderated=(_)
@@ -255,6 +257,143 @@ RSpec.describe Cinch::Plugins::GameBot do
       get_replies(msg('!start'))
       replies = get_replies_text(msg('!status', nick: player1))
       expect(replies).to be == ["Game started with players test1, test2"]
+    end
+  end
+
+  describe '!intro' do
+    it 'responds' do
+      replies = get_replies_text(msg('!intro'))
+      expect(replies).to_not be_empty
+    end
+  end
+
+  describe '!changelog' do
+    it 'responds with no number' do
+      get_replies(msg('!changelog'))
+      # I don't have a useful test right now since I don't have a fake changelog.
+    end
+
+    it 'responds with number' do
+      replies = get_replies_text(msg('!changelog 1'))
+      expect(replies).to be == ['No changes on page 1!']
+    end
+  end
+
+  describe '!reset' do
+    before(:each) do
+      join(msg('!join', nick: player1))
+      join(msg('!join', nick: player2))
+      get_replies(msg('!start'))
+      allow(plugin).to receive(:Channel).with(channel1).and_return(chan)
+    end
+
+    it 'does nothing for non-mods' do
+      expect(get_replies(authed_msg("!reset", nick: player2))).to be_empty
+      expect(chan.messages).to be_empty
+    end
+
+    it 'allows mod to reset a game' do
+      expect(get_replies(authed_msg("!reset", nick: player1))).to be_empty
+      expect(chan.messages).to include('plugin-specific reset message')
+      expect(chan.messages).to include('The game has been reset.')
+    end
+  end
+
+  describe '!replace' do
+    before(:each) do
+      allow(plugin).to receive(:Channel).with(channel1).and_return(chan)
+    end
+
+    it 'does nothing for non-mods' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      allow(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      allow(plugin).to receive(:User).with(player3).and_call_original
+      expect(get_replies(authed_msg("!replace #{player2} #{player3}", nick: player4))).to be_empty
+      expect(chan.messages).to be_empty
+    end
+
+    it 'lets mod replace a player in a waiting room' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      expect(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      allow(plugin).to receive(:User).with(player3).and_call_original
+      get_replies(authed_msg("!replace #{player2} #{player3}", nick: player1))
+      expect(chan.messages).to be == ["#{player2} has been replaced with #{player3}"]
+    end
+
+    it 'lets mod replace a player in a started game' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      join(msg('!join', nick: player1))
+      get_replies(msg('!start'))
+      expect(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      allow(plugin).to receive(:User).with(player3).and_call_original
+      get_replies(authed_msg("!replace #{player2} #{player3}", nick: player1))
+      expect(chan.messages).to include("plugin-specific replace message: #{player2} -> #{player3}")
+      expect(chan.messages).to include("#{player2} has been replaced with #{player3}")
+    end
+
+    it 'fails if game denies the replacement' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      join(msg('!join', nick: player1))
+      get_replies(msg('!start noreplace'))
+      expect(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      allow(plugin).to receive(:User).with(player3).and_call_original
+      get_replies(authed_msg("!replace #{player2} #{player3}", nick: player1))
+      expect(chan.messages).to be_empty
+    end
+
+    it 'fails if replacer is already in a game' do
+      first_message2 = msg('!join', nick: player2)
+      join(first_message2)
+      first_message3 = msg('!join', nick: player3)
+      join(first_message3)
+      expect(plugin).to receive(:User).with(player2).and_return(first_message2.user)
+      expect(plugin).to receive(:User).with(player3).and_return(first_message3.user)
+      replies = get_replies_text(authed_msg("!replace #{player2} #{player3}", nick: player1))
+      expect(replies).to be == ["#{player3} is already in the #{channel1} game."]
+      expect(chan.messages).to be_empty
+    end
+  end
+
+  describe '!kick' do
+    before(:each) do
+      allow(plugin).to receive(:Channel).with(channel1).and_return(chan)
+    end
+
+    it 'does nothing for non-mods' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      allow(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      expect(get_replies(authed_msg("!kick #{player2}", nick: player3))).to be_empty
+      expect(chan.messages).to be_empty
+    end
+
+    it 'lets mod kick a player' do
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      expect(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      get_replies(authed_msg("!kick #{player2}", nick: player1))
+      expect(chan.messages).to be == ["#{player2} has left the game (0/3)"]
+    end
+
+    it 'disallows kicking from started games' do
+      join(msg('!join', nick: player1))
+      first_message = msg('!join', nick: player2)
+      join(first_message)
+      get_replies(msg('!start'))
+      expect(plugin).to receive(:User).with(player2).and_return(first_message.user)
+      replies = get_replies_text(authed_msg("!kick #{player2}", nick: player1))
+      expect(replies).to be == ["You can't kick someone while a game is in progress."]
+      expect(chan.messages).to be_empty
+    end
+
+    it 'shows error if target is not in a game' do
+      replies = get_replies_text(authed_msg("!kick #{player2}", nick: player1))
+      expect(replies).to be == ["#{player2} is not in a game"]
+      expect(chan.messages).to be_empty
     end
   end
 end

@@ -32,11 +32,11 @@ module Cinch; module Plugins; class ExamplePlugin < GameBot
   end
 
   def do_reset_game(game)
-    Channel(game.channel_name).send('game has been reset')
+    Channel(game.channel_name).send('plugin-specific reset message')
   end
 
   def do_replace_user(game, replaced_user, replacing_user)
-    Channel(game.channel_name).send("#{replaced_user.nick} replaced by #{replacing_user.nick}")
+    Channel(game.channel_name).send("plugin-specific replace message: #{replaced_user.nick} -> #{replacing_user.nick}")
   end
 
   def game_status(game)
