@@ -619,6 +619,7 @@ module Cinch; module Plugins; class GameBot
     subscribers = settings['subscribers'] || []
     unless subscribers.include?(m.user.nick)
       m.user.send("You are not subscribed to the invitation list.")
+      return
     end
 
     if m.user.authed?
