@@ -56,9 +56,9 @@ RSpec.describe Cinch::Plugins::GameBot do
   ]}
 
   let(:opts) {{
-    :channels => [channel1],
-    :settings => '/dev/null',
-    :mods => [player1],
+    channels: [channel1],
+    settings: '/dev/null',
+    mods: [player1],
   }}
   let(:bot) {
     make_bot(Cinch::Plugins::ExamplePlugin, opts) { |c| c.loggers.first.level = :warn }
