@@ -518,6 +518,29 @@ RSpec.describe Cinch::Plugins::GameBot do
     end
   end
 
+  describe '!room' do
+    it 'does not let non-mods change' do
+      m = authed_msg('!room silent', nick: player2)
+      expect(m.channel).not_to receive(:moderated=)
+
+      get_replies(m)
+    end
+
+    it 'lets mods change to silent' do
+      m = authed_msg('!room silent', nick: player1)
+      expect(m.channel).to receive(:moderated=).with(true)
+
+      get_replies(m)
+    end
+
+    it 'lets mods change to vocal' do
+      m = authed_msg('!room vocal', nick: player1)
+      expect(m.channel).to receive(:moderated=).with(false)
+
+      get_replies(m)
+    end
+  end
+
   describe '!notice' do
     before(:each) { Cinch.pm_users.clear }
 
