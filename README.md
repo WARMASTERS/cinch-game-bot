@@ -4,6 +4,38 @@ cinch-game-bot is a generic skeleton for turn-based games written in [Cinch](htt
 
 [![Build Status](https://travis-ci.org/petertseng/cinch-game_bot.svg?branch=master)](https://travis-ci.org/petertseng/cinch-game_bot)
 
+## Setup
+
+You'll need a recent version of [Ruby](https://www.ruby-lang.org/).
+Ruby 2.0 or newer is required because of keyword arguments.
+The [build status](https://travis-ci.org/petertseng/cinch-game_bot) will confirm compatibility with various Ruby versions.
+Note that [2.0 is no longer supported](https://www.ruby-lang.org/en/news/2016/02/24/support-plan-of-ruby-2-0-0-and-2-1/) by the Ruby team, so it would be better to use a later version.
+
+You'll need [cinch](https://github.com/cinchrb/cinch), which can be acquired via `gem install cinch`.
+
+## Usage
+
+Given that you have performed the requisite setup and have written or acquired a game plugin that meets the interface described below, the minimal code to get a working bot might resemble:
+
+```ruby
+require 'cinch'
+require 'cinch/plugins/my_game'
+
+bot = Cinch::Bot.new do
+  configure do |c|
+    c.server = 'irc.example.com'
+    c.channels = ['#playmygame']
+    c.plugins.plugins = [Cinch::Plugins::MyGame]
+    c.plugins.optins[Cinch::Plugins::MyGame] = {
+      channels: ['#playmygame'],
+      settings: 'my-settings.yaml',
+    }
+  end
+end
+
+bot.start
+```
+
 ## Interface
 
 Extend GameBot and override the methods listed in the section "Implementing classes should override these"
