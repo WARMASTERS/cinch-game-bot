@@ -95,23 +95,21 @@ RSpec.describe Cinch::Plugins::GameBot do
 
     it 'allows join via PM' do
       m = msg("!join #{channel1}", nick: player1, channel: nil)
-      # These at_least(1) are just because of the cinch-test bug (double reply to PM)
-      # They can be removed if cinch-test releases a new version.
-      expect(plugin).to receive(:Channel).with(channel1).at_least(1).and_return(chan)
-      expect(chan).to receive(:has_user?).with(m.user).at_least(1).and_return(true)
-      expect(chan).to receive(:voice).with(m.user).at_least(1)
-      # NB: because of the aforementioned bug, replies actually contains a "You are already in the #channel game"!
-      # We will obviously not test this behavior.
+      expect(plugin).to receive(:Channel).with(channel1).and_return(chan)
+      expect(chan).to receive(:has_user?).with(m.user).and_return(true)
+      expect(chan).to receive(:voice).with(m.user)
+
       get_replies(m)
+
       expect(chan.messages).to be == ["#{player1} has joined the game (1/3)"]
     end
 
     it 'requires channel argument by PM' do
       m = msg("!join", nick: player1, channel: nil)
       replies = get_replies_text(m)
-      # cinch-test double-reply bug means we can't check that count is exactly equal to one.
-      expect(replies).to_not be_empty
+
       expect(replies).to be_all { |r| r =~ /must specify the channel/ }
+      expect(replies.size).to be == 1
     end
 
     it 'requires channel presence' do
@@ -253,8 +251,8 @@ RSpec.describe Cinch::Plugins::GameBot do
 
       replies = get_replies_text(msg('!who', nick: player1, channel: nil)).map { |t| t.gsub(/[^a-z0-9 ]/, '') }
 
-      expect(replies).to_not be_empty
       expect(replies).to be_all { |r| r == player1 }
+      expect(replies.size).to be == 1
     end
 
     it 'asks for a channel if requestor does not specify one by PM' do
@@ -262,8 +260,8 @@ RSpec.describe Cinch::Plugins::GameBot do
 
       replies = get_replies_text(msg('!who', nick: player1, channel: nil))
 
-      expect(replies).to_not be_empty
       expect(replies).to be_all { |r| r.include?('must specify the channel') }
+      expect(replies.size).to be == 1
     end
 
     it 'names players in unstarted game by PM if requestor explicitly specifies' do
@@ -271,8 +269,8 @@ RSpec.describe Cinch::Plugins::GameBot do
 
       replies = get_replies_text(msg("!who #{channel1}", nick: player1, channel: nil)).map { |t| t.gsub(/[^a-z0-9 ]/, '') }
 
-      expect(replies).to_not be_empty
       expect(replies).to be_all { |r| r == player2 }
+      expect(replies.size).to be == 1
     end
   end
 
@@ -305,8 +303,8 @@ RSpec.describe Cinch::Plugins::GameBot do
 
       replies = get_replies_text(msg('!status', nick: player1, channel: nil))
 
-      expect(replies).to_not be_empty
       expect(replies).to be_all { |r| r.include?('is forming') }
+      expect(replies.size).to be == 1
     end
   end
 
